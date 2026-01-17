@@ -1,0 +1,9 @@
+server:
+  insecure: false          # 不要 --insecure
+  service:
+    type: ClusterIP
+    enableHttps: false
+    ports:
+      http: 80
+  certificate:
+    enabled: false

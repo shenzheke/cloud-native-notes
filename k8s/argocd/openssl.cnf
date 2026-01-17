@@ -1,0 +1,23 @@
+# openssl.cnf
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+req_extensions = v3_req
+
+[dn]
+CN = argocd-server
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = argocd-server
+DNS.2 = argocd-server.argocd
+DNS.3 = argocd-server.argocd.svc
+DNS.4 = argocd-server.argocd.svc.cluster.locali
+DNS.5 = argocd.devops.com
+IP.1 = 10.96.0.1   # 可选：如果你通过 ClusterIP 访问
