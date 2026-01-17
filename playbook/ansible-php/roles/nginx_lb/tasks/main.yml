@@ -1,0 +1,27 @@
+---
+- name: Install Nginx
+  dnf:
+    name: nginx
+    state: present
+
+- name: Deploy Nginx PHP load balancing config
+  template:
+    src: php_lb.conf.j2
+    dest: /etc/nginx/conf.d/php_lb.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nginx
+
+- name: Start and enable Nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+# handlers
+- name: Restart nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+

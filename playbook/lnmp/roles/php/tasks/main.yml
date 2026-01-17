@@ -1,0 +1,46 @@
+- name: Install Remi repo
+  dnf:
+    name: https://rpms.remirepo.net/enterprise/remi-release-9.rpm
+    state: present
+    disable_gpg_check: yes
+- name: Enable PHP {{ php_version }} module
+  shell: dnf module enable -y php:{{ php_version }}
+  args:
+    executable: /bin/bash
+
+- name: Install PHP and extensions
+  dnf:
+    name:
+      - php
+      - php-fpm
+      - php-mysqlnd
+      - php-opcache
+      - php-gd
+      - php-mbstring
+      - php-xml
+    state: present
+
+- name: Enable and start PHP-FPM
+  systemd:
+    name: php-fpm
+    enabled: yes
+    state: started
+
+- name: Deploy php.ini
+  template:
+    src: php.ini.j2
+    dest: /etc/php.ini
+    owner: root
+    group: root
+    mode: 0644
+  notify: Restart php-fpm
+
+- name: Deploy PHP-FPM pool config
+  template:
+    src: www.conf.j2
+    dest: /etc/php-fpm.d/www.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: Restart php-fpm
+

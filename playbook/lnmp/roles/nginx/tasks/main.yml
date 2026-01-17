@@ -1,0 +1,30 @@
+- name: Install Nginx
+  dnf:
+    name: nginx
+    state: present
+
+- name: Enable and start Nginx
+  systemd:
+    name: nginx
+    enabled: yes
+    state: started
+
+- name: Deploy Nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: Reload Nginx
+
+- name: Allow HTTP/HTTPS in firewall
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - http
+    - https
+

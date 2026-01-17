@@ -1,0 +1,70 @@
+---
+- name: Import Remi GPG key
+  rpm_key:
+    state: present
+    key: https://rpms.remirepo.net/RPM-GPG-KEY-remi
+- name: Enable Remi repository
+  dnf:
+    name:
+      - https://rpms.remirepo.net/enterprise/remi-release-9.rpm
+    disable_gpg_check: true
+    state: present
+
+- name: Enable Remi PHP 8.2 module
+  shell: dnf module reset php -y && dnf module enable php:remi-8.2 -y
+  args:
+    creates: /etc/dnf/modules.d/php.module
+  register: remi_enable
+
+- name: Install PHP and extensions
+  dnf:
+    name:
+      - php
+      - php-fpm
+      - php-cli
+      - php-common
+      - php-mysqlnd
+      - php-redis
+      - php-opcache
+      - php-gd
+      - php-mbstring
+      - php-xml
+    state: present
+
+- name: Configure php-fpm pool
+  template:
+    src: www.conf.j2
+    dest: /etc/php-fpm.d/www.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart php-fpm
+
+- name: Deploy test php page
+  template:
+    src: info.php.j2
+    dest: /usr/share/nginx/html/info.php
+    owner: nginx
+    group: nginx
+    mode: '0644'
+
+- name: Ensure php-fpm service running
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes
+
+- name: Verify PHP Redis module
+  shell: php -m | grep redis
+  register: redis_check
+  changed_when: false
+
+- debug:
+    msg: "Redis module: {{ redis_check.stdout }}"
+
+# handlers
+- name: Restart php-fpm
+  ansible.builtin.service:
+    name: php-fpm
+    state: restarted
+

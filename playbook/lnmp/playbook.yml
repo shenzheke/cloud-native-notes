@@ -1,0 +1,12 @@
+- name: Deploy LNMP Stack on Rocky9
+  hosts: backup
+  become: yes
+  vars:
+    php_version: "8.2"
+    mariadb_root_password: "Root123!"
+
+  roles:
+    - nginx
+    - php
+    - mariadb
+

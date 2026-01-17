@@ -1,0 +1,13 @@
+---
+- name: Deploy PHP stack with Remi repo
+  hosts: web
+  become: true
+  roles:
+    - php_web
+
+- name: Configure Nginx load balancer for PHP-FPM
+  hosts: lb
+  become: true
+  roles:
+    - nginx_lb
+

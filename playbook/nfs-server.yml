@@ -1,0 +1,18 @@
+- hosts: backup
+  tasks:
+    - name: install nfs rpcbind
+      dnf: name=nfs-utils,rpcbind state=installed
+    
+    - name: configure nfs exports file
+      copy: dest=/etc/exports content="/playbook-backup/    172.16.1.0/24(rw,sync,all_squash)"
+    
+    - name: mkdir chown
+      file: path=/playbook-backup state=directory owner=65534 group=65534
+
+    - name: start && enable rpc
+      systemd: name=rpcbind.target enabled=yes state=started
+    - name: start && enable nfs
+      systemd: name=nfs-server enabled=yes state=started
+
+    - name: mount test
+      mount: fstype=nfs src=172.16.1.41:/playbook-backup path=/mnt state=mounted

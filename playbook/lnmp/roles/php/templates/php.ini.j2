@@ -1,0 +1,24 @@
+[PHP]
+; PHP 基础配置
+engine = On
+short_open_tag = Off
+precision = 14
+output_buffering = 4096
+zlib.output_compression = Off
+implicit_flush = Off
+
+; 时区配置
+date.timezone = Asia/Shanghai
+
+; 错误日志
+log_errors = On
+error_log = /var/log/php_errors.log
+
+; 上传限制
+upload_max_filesize = 50M
+post_max_size = 50M
+
+; 内存限制
+memory_limit = 256M
+max_execution_time = 300
+

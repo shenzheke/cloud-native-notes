@@ -1,0 +1,26 @@
+---
+- name: 配置 nginx 官方仓库并安装 nginx
+  hosts: backup     # 这里的 web 对应 /etc/ansible/hosts 里的组名
+  become: true
+  tasks:
+    - name: 添加 nginx 官方仓库
+      ansible.builtin.yum_repository:
+        name: nginx
+        description: nginx official repository
+        baseurl: http://nginx.org/packages/centos/$releasever/$basearch/
+        gpgcheck: yes
+        enabled: yes
+        gpgkey: https://nginx.org/keys/nginx_signing.key
+        file: nginx   # 会生成 /etc/yum.repos.d/nginx.repo
+
+    - name: 确认 nginx 已安装
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    - name: 启动并设置 nginx 开机自启
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+

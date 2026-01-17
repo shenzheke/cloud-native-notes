@@ -1,0 +1,24 @@
+upstream php_backend {
+    server 10.0.0.7:9000;
+    server 10.0.0.8:9000;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass php_backend;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+

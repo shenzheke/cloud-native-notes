@@ -1,0 +1,42 @@
+- name: Install MariaDB server
+  dnf:
+    name: mariadb-server
+    state: present
+- name: Install Python3 and PyMySQL for Ansible MySQL modules
+  dnf:
+    name:
+      - python3
+      - python3-pip
+      - python3-PyMySQL
+    state: present
+
+- name: Enable and start MariaDB
+  systemd:
+    name: mariadb
+    enabled: yes
+    state: started
+
+- name: Ensure root password is set
+  mysql_user:
+    login_user: root
+    login_password: Root123! 
+    name: root
+    password: "{{ mariadb_root_password }}"
+    host_all: yes
+    state: present
+
+- name: Remove anonymous users
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: Remove test database
+  mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    name: test
+    state: absent
+

@@ -1,0 +1,56 @@
+---
+- name: Deploy Zabbix Agent2 with Aliyun repo and custom hostname
+  hosts: all
+  become: true
+  vars:
+    zabbix_server: "172.16.1.61"
+
+  tasks:
+    - name: Create Zabbix repo file using Aliyun mirror
+      copy:
+        dest: /etc/yum.repos.d/zabbix.repo
+        content: |
+          [zabbix]
+          name=Zabbix Official Repository - $basearch
+          baseurl=https://mirrors.aliyun.com/zabbix/zabbix/6.0/rhel/$releasever/$basearch/
+          enabled=1
+          gpgcheck=0
+
+          [zabbix-frontend]
+          name=Zabbix Official Repository frontend - $basearch
+          baseurl=https://mirrors.aliyun.com/zabbix/non-supported/rhel/$releasever/$basearch/
+          enabled=1
+          gpgcheck=0
+
+          [zabbix-agent2]
+          name=Zabbix Official Repository agent2 - $basearch
+          baseurl=https://mirrors.aliyun.com/zabbix/zabbix/6.0/rhel/$releasever/$basearch/
+          enabled=1
+          gpgcheck=0
+
+    - name: Make yum cache
+      command: dnf makecache
+      args:
+        warn: false
+      ignore_errors: true
+
+    - name: Install zabbix-agent2
+      dnf:
+        name: zabbix-agent2
+        state: present
+
+    - name: Configure zabbix_agent2.conf
+      blockinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+        block: |
+          Server={{ zabbix_server }}
+          ServerActive={{ zabbix_server }}
+          Hostname={{ hostname }}
+
+    - name: Enable and restart zabbix-agent2
+      systemd:
+        name: zabbix-agent2
+        enabled: yes
+        state: restarted
+

@@ -1,0 +1,36 @@
+- name: Update hostname and /etc/hosts
+  hosts: all
+  become: true
+  vars:
+    host_list:
+      - { hostname: lb01, ip: 172.16.1.5 }
+      - { hostname: lb02, ip: 172.16.1.6 }
+      - { hostname: web01, ip: 172.16.1.7 }
+      - { hostname: web02, ip: 172.16.1.8 }
+      - { hostname: sweb01, ip: 172.16.1.9 }
+      - { hostname: sweb02, ip: 172.16.1.10 }
+      - { hostname: nfs01, ip: 172.16.1.31 }
+      - { hostname: backup, ip: 172.16.1.41 }
+      - { hostname: db01, ip: 172.16.1.51 }
+      - { hostname: m01, ip: 172.16.1.61 }
+
+  tasks:
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - name: Write complete /etc/hosts
+      copy:
+        dest: /etc/hosts
+        content: |
+          ::1 localhost.localdomain localhost
+          ::1 localhost6.localdomain6 localhost6
+          127.0.0.1 localhost.localdomain localhost
+          127.0.0.1 localhost4.localdomain4 localhost4
+          {% for host in host_list %}
+          {{ host.ip }}   {{ host.hostname }}
+          {% endfor %}
+        owner: root
+        group: root
+        mode: '0644'
+

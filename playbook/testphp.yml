@@ -1,0 +1,51 @@
+- name: LNMP Tset hosts
+  hosts: backup
+  become: yes
+  tasks:
+    - name: Create LNMP test page
+      copy:
+        dest: /usr/share/nginx/html/test.php
+        content: |
+          <?php
+          // LNMP Test Page
+          $host = "127.0.0.1";
+          $user = "root";
+          $pass = "Root123!";
+          $db   = "mysql"; // 系统自带库
+
+          echo "<h1>LNMP Test Page</h1>";
+
+          // 基本系统信息
+          echo "<h2>Server Info</h2>";
+          echo "Hostname: " . gethostname() . "<br>";
+          echo "Server IP: " . $_SERVER['SERVER_ADDR'] . "<br>";
+          echo "PHP Version: " . phpversion() . "<br>";
+          echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "<br>";
+
+          // 时间
+          echo "<h2>Time</h2>";
+          echo "Current Time: " . date("Y-m-d H:i:s") . "<br>";
+
+          // MySQL 连接测试
+          echo "<h2>MySQL Connection</h2>";
+          $conn = new mysqli($host, $user, $pass, $db);
+          if ($conn->connect_error) {
+              echo "<span style='color:red'>❌ MySQL Connect Failed: " . $conn->connect_error . "</span><br>";
+          } else {
+              echo "<span style='color:green'>✅ MySQL Connected Successfully!</span><br>";
+              $result = $conn->query("SHOW DATABASES;");
+              echo "Databases:<br><ul>";
+              while($row = $result->fetch_assoc()) {
+                  echo "<li>" . $row['Database'] . "</li>";
+              }
+              echo "</ul>";
+              $conn->close();
+          }
+
+          // 环境变量
+          echo "<h2>Environment</h2>";
+          echo "<pre>";
+          print_r($_SERVER);
+          echo "</pre>";
+          ?>
+
