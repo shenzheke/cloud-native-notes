@@ -1,0 +1,11 @@
+# l2adv-eth1.yaml
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2adv-eth1
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - lb-pool-eth1
+  interfaces:
+  - eth1   #  关键：只在 eth1 上宣告 ARP

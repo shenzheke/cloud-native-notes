@@ -1,0 +1,45 @@
+# 文件名建议：dashboard-ingressroute.yaml
+
+---
+# 1. 创建专用的 ServersTransport（跳过 dashboard 自签证书验证）
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: k8s-dashboard-transport
+  namespace: kubernetes-dashboard   # 建议跟 dashboard 放同一个 ns
+spec:
+  serverName: "kubernetes-dashboard"
+  insecureSkipVerify: true           # 必须有，否则后端证书验证失败
+
+---
+# 2. IngressRoute（主配置）
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+spec:
+  entryPoints:
+    - websecure          # 假设你用 443 入口（https）
+
+  routes:
+    - match: Host(`dashboard.k8s.local`)   # 改成你的域名
+      kind: Rule
+      services:
+        - name: kubernetes-dashboard
+          port: 443
+          scheme: https                      # 重要！后端是 https
+          namespace: kubernetes-dashboard
+          serversTransport: k8s-dashboard-transport   # 引用上面的 transport
+
+  tls:
+    # 如果你有合法证书，填这里（推荐 cert-manager）
+    # secretName: your-tls-secret
+    # 或者先不填，走自签（浏览器会警告）
+
+# 可选：加一个 http -> https 重定向的路由（如果有 web 入口）
+  # routes:
+  #   - match: Host(`k8s-dashboard.your-domain.com`) && PathPrefix(`/`)
+  #     kind: Rule
+  #     services:
+  #       - name: noop  # 随便一个空服务或直接用 redirectScheme 中间件

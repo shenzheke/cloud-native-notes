@@ -1,0 +1,20 @@
+# values-dashboard.yaml
+additionalArguments:
+  - "--api.dashboard=true"           # 明确启用 dashboard（默认已启用，但保险起见）
+  # - "--api.insecure=true"          # 仅开发测试用！生产千万不要开，会在 traefik entrypoint (9000) 上不安全暴露
+
+ingressRoute:
+  dashboard:
+    enabled: true                     # 关键：开启 chart 自带的 dashboard IngressRoute
+    # matchRule: Host(`traefik.your-domain.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))   # 默认就是这个，可自定义
+    matchRule: Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+    entryPoints:
+      - websecure                     # 推荐用 https 入口（443）
+    middlewares:                    # 强烈建议加 auth
+      - name: traefik-dashboard-auth   # 后面会创建这个 middleware
+
+ports:
+  traefik:
+    port: 9000
+    exposedPort: 9000                 # 如果你想本地测试暴露 traefik 端口，可选
+    # protocol: TCP

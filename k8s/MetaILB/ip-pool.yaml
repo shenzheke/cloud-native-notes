@@ -1,0 +1,9 @@
+# ip-pool.yaml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lb-pool-eth1
+  namespace: metallb-system
+spec:
+  addresses:
+  - 172.16.1.220-172.16.1.250
