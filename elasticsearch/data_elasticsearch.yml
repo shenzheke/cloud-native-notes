@@ -1,0 +1,41 @@
+cluster.name: my-es-cluster
+node.name: web02                 # 改成 sweb01 / sweb02
+node.roles: [ data ]             # 不参与选举
+
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+network.host: 10.0.0.8           # 改成 10.0.0.9 / 10.0.0.10
+http.port: 9200
+transport.host: 10.0.0.8         # 同上
+transport.port: 9300
+
+bootstrap.memory_lock: true
+
+discovery.seed_hosts:
+  - 10.0.0.5:9300
+  - 10.0.0.6:9300
+  - 10.0.0.7:9300
+
+# 首次启动时不需要 initial_master_nodes（8.x 自动加入）
+# cluster.initial_master_nodes: []  # 可留空或删除
+
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+
+# === SSL 配置同上 ===
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: false
+
+xpack.security.http.ssl.enabled: true
+xpack.security.http.ssl.keystore.path: /etc/elasticsearch/certs/elastic-cert.p12
+xpack.security.http.ssl.truststore.path: /etc/elasticsearch/certs/elastic-stack-ca.p12
+xpack.security.http.ssl.keystore.password: rootroot.
+xpack.security.http.ssl.truststore.password: rootroot.
+
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/certs/elastic-cert.p12
+xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/certs/elastic-stack-ca.p12
+xpack.security.transport.ssl.keystore.password: rootroot.
+xpack.security.transport.ssl.truststore.password: rootroot.
+xpack.security.transport.ssl.verification_mode: certificate

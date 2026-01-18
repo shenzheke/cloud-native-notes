@@ -1,0 +1,62 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "rocky9-prod"
+    env: "production"
+
+# 安全：关闭默认公开所有接口，只允许本地和内网
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'node_rocky9'
+    static_configs:
+      - targets: ['10.0.0.61:9100']     # 替换成实际内网IP或域名
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: rocky9-m01        # 自定义实例名，便于 Grafana 分辨
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'rocky9-host'
+  # 示例：采集 Node Exporter（后续可加）
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['localhost:9100']
+# 2. 使用 file_sd 动态发现所有 Node Exporter（最常用）
+  - job_name: 'rocky9_node_exporter'
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/node_targets.yml   # 支持通配符 *.yml
+        refresh_interval: 5m   # 每 5 分钟检查一次文件变化（默认 5m）
+
+# 3. 如果有其他不同 exporter，可以再加一个 job
+  - job_name: 'pushgateway'
+    honor_labels: true
+    honor_timestamps: true
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    basic_auth:
+      username: prometheus
+      password: rootroot.
+  
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/pushgateway.d/*.yml   # 路径自定义
+        refresh_interval: 5m   # 5分钟轮询一次文件变化
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093

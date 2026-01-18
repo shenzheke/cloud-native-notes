@@ -1,0 +1,17 @@
+[zabbix]
+name=Zabbix Official Repository - $basearch
+baseurl=https://mirrors.aliyun.com/zabbix/zabbix/6.0/rhel/$releasever/$basearch/
+enabled=1
+gpgcheck=0
+
+[zabbix-frontend]
+name=Zabbix Official Repository frontend - $basearch
+baseurl=https://mirrors.aliyun.com/zabbix/non-supported/rhel/$releasever/$basearch/
+enabled=1
+gpgcheck=0
+
+[zabbix-agent2]
+name=Zabbix Official Repository agent2 - $basearch
+baseurl=https://mirrors.aliyun.com/zabbix/zabbix/6.0/rhel/$releasever/$basearch/
+enabled=1
+gpgcheck=0

@@ -1,0 +1,15 @@
+server.port: 5601
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["https://10.0.0.5:9200"]
+#elasticsearch.username: "elastic"
+#elasticsearch.password: "p+5KfbN0KGK0eEpXRzvY"
+elasticsearch.ssl.certificateAuthorities: ["/etc/kibana/certs/elastic-stack-ca.crt"]
+server.ssl.enabled: true
+server.ssl.certificate: /etc/kibana/certs/kibana.crt
+server.ssl.key: /etc/kibana/certs/kibana.key
+# 使用服务账户 token
+elasticsearch.serviceAccountToken: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS1zZXJ2ZXI6YzN2TDk5ZTZSMEtyZGhUeXFQdS1Idw"
+elasticsearch.ssl.verificationMode: certificate
+xpack.encryptedSavedObjects.encryptionKey: "us6BARvNzAC6U7MXtyXBaMXfGvUFZ6ZY6G4pMrNRn1Y"
+xpack.reporting.encryptionKey: "dEht0eubsVQc6K0qgBOiOsJfZ5quxIgbZ3Rh5NvXMmA"
+xpack.security.encryptionKey: "GMvBxz1TzVExokLKKkwOMVzFkjNJWDpvNfmd3JRdusg"

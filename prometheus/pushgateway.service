@@ -1,0 +1,26 @@
+[Unit]
+Description=Prometheus Pushgateway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=pushgateway
+Group=pushgateway
+Type=simple
+Environment="GOMAXPROCS=2"
+ExecStart=/usr/local/pushgateway/pushgateway \
+  --web.listen-address="0.0.0.0:9091" \
+  --web.telemetry-path="/metrics" \
+  --persistence.file="/var/lib/pushgateway/pushgateway.data" \
+  --persistence.interval=5m \
+  --log.level=info \
+  --web.enable-admin-api
+# 如果你暂时不想在 Pushgateway 本身加 basic auth（已经交给 Nginx 了），就不要加下面这行
+# --web.basic-auth.file="/etc/pushgateway/basic-auth.htpasswd"
+
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

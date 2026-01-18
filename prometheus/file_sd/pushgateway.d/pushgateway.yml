@@ -1,0 +1,8 @@
+# /etc/prometheus/file_sd/pushgateway.yml
+- targets:
+    - 10.0.0.41:443          # 当前 backup 节点
+    # - 10.0.0.42:443        # 以后加第二台直接加一行
+  labels:
+    env: prod
+    role: pushgateway
+    instance: backup01       # 自定义标签，方便查询

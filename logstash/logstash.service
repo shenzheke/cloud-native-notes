@@ -1,0 +1,16 @@
+[Unit]
+Description=Logstash
+After=network.target
+
+[Service]
+Type=simple
+User=logstash
+Group=logstash
+EnvironmentFile=-/etc/default/logstash
+ExecStart=/usr/local/logstash/bin/logstash "--path.settings" "/etc/logstash"
+Restart=always
+WorkingDirectory=/usr/local/logstash
+Nice=19
+
+[Install]
+WantedBy=multi-user.target

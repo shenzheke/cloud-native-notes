@@ -1,0 +1,60 @@
+# ============ INPUT ============
+input {
+  beats {
+    port => 5044
+  }
+}
+
+# ============ FILTER ============
+filter {
+  if [message] =~ /HTTP\/[0-9.]+/ {
+
+    dissect {
+      mapping => {
+        "message" => '%{client_ip} - %{auth} [%{timestamp}] "%{method} %{url} HTTP/%{http_version}" %{status} %{response_bytes} "%{referrer}" "%{http_user_agent}"'
+      }
+      tag_on_failure => ["_dissectfailure"]
+    }
+
+    if "_dissectfailure" not in [tags] {
+
+      date {
+        match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z", "ISO8601" ]
+        target => "@timestamp"
+      }
+
+      mutate {
+        convert => {
+          "response_bytes" => "integer"
+          "status" => "integer"
+        }
+        gsub => [ "url", "\?.*$", "" ]
+        add_field => {
+          "log_type" => "access_log"
+          "pipeline" => "beats-logstash"
+        }
+        remove_field => [ "ecs", "input", "host", "log", "event", "message", "auth", "referrer", "query_string", "http_version" ]
+      }
+    }
+
+  }
+}
+
+# ============ OUTPUT ============
+output {
+  elasticsearch {
+    hosts => [
+      "https://10.0.0.5:9200",
+      "https://10.0.0.6:9200",
+      "https://10.0.0.7:9200"
+    ]
+    user => "elastic"
+    password => "p+5KfbN0KGK0eEpXRzvY"
+    data_stream => true
+    data_stream_auto_routing => true
+    action => "create"
+    ssl_enabled => true
+    ssl_verification_mode => "full"
+    ssl_certificate_authorities => ["/etc/logstash/certs/elastic-cert.crt"]
+  }
+}

@@ -1,0 +1,17 @@
+node.name: logstash-10  # 分别改为 logstash-8/9/10
+path.data: /var/lib/logstash
+path.logs: /var/log/logstash
+
+api.enabled: true
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+
+xpack.monitoring.enabled: true
+xpack.monitoring.elasticsearch.hosts: [
+  "https://10.0.0.5:9200",
+  "https://10.0.0.6:9200",
+  "https://10.0.0.7:9200"
+]
+xpack.monitoring.elasticsearch.username: "elastic"
+xpack.monitoring.elasticsearch.password: "p+5KfbN0KGK0eEpXRzvY"
+xpack.monitoring.elasticsearch.ssl.certificate_authority: "/etc/logstash/certs/elastic-cert.crt"
