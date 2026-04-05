@@ -1,0 +1,328 @@
+---
+rbac:
+  create: true
+
+serviceAccounts:
+  nodeplugin:
+    create: true
+    name:
+  provisioner:
+    create: true
+    name:
+
+csiConfig:
+  - clusterID: "594e535e-d82c-11f0-afa7-bc24112b746f"
+    monitors:
+      - "10.0.0.31:6789"
+      - "10.0.0.41:6789"
+      - "10.0.0.51:6789"
+
+csiMapping: []
+
+encryptionKMSConfig: {}
+
+commonLabels: {}
+
+logLevel: 5
+sidecarLogLevel: 1
+logSlowOperationInterval: 30s
+
+CSIDriver:
+  fsGroupPolicy: "File"
+  seLinuxMount: true
+
+nodeplugin:
+  name: nodeplugin
+  priorityClassName: system-node-critical
+  updateStrategy: RollingUpdate
+
+  httpMetrics:
+    enabled: true
+    containerPort: 8080
+
+    service:
+      enabled: true
+      servicePort: 8080
+      type: ClusterIP
+
+      annotations: {}
+
+      clusterIP: ""
+
+      ## List of IP addresses at which the stats-exporter service is available
+      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+      ##
+      externalIPs: []
+
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+
+  ## Reference to one or more secrets to be used when pulling images
+  ##
+  imagePullSecrets: []
+
+  profiling:
+    enabled: false
+
+  registrar:
+    image:
+      repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
+      tag: v2.15.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  plugin:
+    image:
+      repository: quay.io/cephcsi/cephcsi
+      tag: v3.16.2
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  annotations: {}
+
+  podSecurityContext: {}
+
+  podAnnotations: {}
+
+  fencing: false
+
+provisioner:
+  name: provisioner
+  replicaCount: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+  defaultFSType: ext4
+  deployController: true
+  timeout: 60s
+  hardMaxCloneDepth: 8
+  softMaxCloneDepth: 4
+  maxSnapshotsOnImage: 450
+  minSnapshotsOnImage: 250
+
+  priorityClassName: system-cluster-critical
+
+  enableHostNetwork: false
+
+  fencing: false
+
+  httpMetrics:
+    enabled: true
+    containerPort: 8080
+
+    service:
+      enabled: true
+      servicePort: 8080
+      type: ClusterIP
+
+      annotations: {}
+
+      clusterIP: ""
+
+      ## List of IP addresses at which the stats-exporter service is available
+      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+      ##
+      externalIPs: []
+
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+
+  ## Reference to one or more secrets to be used when pulling images
+  ##
+  imagePullSecrets: []
+
+  profiling:
+    enabled: false
+
+  provisioner:
+    image:
+      repository: registry.k8s.io/sig-storage/csi-provisioner
+      tag: v6.0.0
+      pullPolicy: IfNotPresent
+    resources: {}
+    args:
+    ## For further options, check
+    ## https://github.com/kubernetes-csi/external-provisioner#command-line-options
+    extraArgs: []
+
+  setmetadata: true
+
+  attacher:
+    name: attacher
+    enabled: true
+    image:
+      repository: registry.k8s.io/sig-storage/csi-attacher
+      tag: v4.10.0
+      pullPolicy: IfNotPresent
+    resources: {}
+    args:
+    ## For further options, check
+    ## https://github.com/kubernetes-csi/external-attacher#command-line-options
+    extraArgs: []
+
+  resizer:
+    name: resizer
+    enabled: true
+    image:
+      repository: registry.k8s.io/sig-storage/csi-resizer
+      tag: v2.0.0
+      pullPolicy: IfNotPresent
+    resources: {}
+    args:
+    ## For further options, check
+    ## https://github.com/kubernetes-csi/external-resizer#recommended-optional-arguments
+    extraArgs: []
+
+  snapshotter:
+    image:
+      repository: registry.k8s.io/sig-storage/csi-snapshotter
+      tag: v8.4.0
+      pullPolicy: IfNotPresent
+    resources: {}
+    args:
+      enableVolumeGroupSnapshots: false
+    ## For further options, check
+    ## https://github.com/kubernetes-csi/external-snapshotter#csi-external-snapshotter-sidecar-command-line-options
+    extraArgs: []
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  annotations: {}
+
+  podSecurityContext: {}
+
+  podAnnotations: {}
+
+topology:
+  domainLabels: []
+
+
+storageClass:
+  create: false
+  name: csi-rbd-sc
+
+  annotations: {}
+
+  clusterID: 594e535e-d82c-11f0-afa7-bc24112b746f
+
+  dataPool: ""
+
+  pool: replicapool
+
+  imageFeatures: "layering"
+
+
+  #
+  #
+
+  mounter: ""
+
+  cephLogDir: ""
+
+  cephLogStrategy: ""
+
+  volumeNamePrefix: ""
+
+  encrypted: ""
+
+  encryptionKMSID: ""
+
+  topologyConstrainedPools: []
+
+  mapOptions: ""
+
+  unmapOptions: ""
+
+  stripeUnit: ""
+
+  stripeCount: ""
+
+  objectSize: ""
+
+  provisionerSecret: csi-rbd-secret
+  provisionerSecretNamespace: ""
+  controllerExpandSecret: csi-rbd-secret
+  controllerExpandSecretNamespace: ""
+  controllerPublishSecret: csi-rbd-secret
+  controllerPublishSecretNamespace: ""
+  nodeStageSecret: csi-rbd-secret
+  nodeStageSecretNamespace: ""
+  fstype: ext4
+  reclaimPolicy: Delete
+  allowVolumeExpansion: true
+  mountOptions: []
+
+volumeSnapshotClass:
+  create: false
+  name: csi-rbdplugin-snapclass
+
+  annotations: {}
+
+  labels: {}
+
+  clusterID: 594e535e-d82c-11f0-afa7-bc24112b746f
+
+  snapshotNamePrefix: ""
+
+  snapshotterSecret: csi-rbd-secret
+  snapshotterSecretNamespace: ""
+
+  deletionPolicy: Delete
+
+volumeGroupSnapshotClass:
+  create: false
+  name: csi-rbdplugin-groupsnapclass
+
+  annotations: {}
+
+  clusterID: 594e535e-d82c-11f0-afa7-bc24112b746f
+
+  pool: replicapool
+
+  volumeGroupNamePrefix: ""
+
+  groupSnapshotterSecret: csi-rbd-secret
+  groupSnapshotterSecretNamespace: ""
+
+  deletionPolicy: Delete
+
+selinuxMount: true
+
+secret:
+  create: false
+  name: csi-rbd-secret
+  annotations: {}
+  userID: <plaintext ID>
+  userKey: <Ceph auth key corresponding to userID above>
+  encryptionPassphrase: test_passphrase
+
+cephconf: |
+  [global]
+    auth_cluster_required = cephx
+    auth_service_required = cephx
+    auth_client_required = cephx
+
+extraDeploy: []
+
+
+provisionerSocketFile: csi-provisioner.sock
+pluginSocketFile: csi.sock
+kubeletDir: /var/lib/kubelet
+cephLogDirHostPath: /var/log/ceph
+driverName: rbd.csi.ceph.com
+configMapName: ceph-csi-config
+externallyManagedConfigmap: false
+cephConfConfigMapName: ceph-config
+kmsConfigMapName: ceph-csi-encryption-kms-config
+

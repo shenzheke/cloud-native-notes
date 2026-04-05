@@ -1,0 +1,59 @@
+# n8n-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000  # 关键点：让 K8s 确保挂载卷对 GID 1000 可写
+      containers:
+      - name: n8n
+        image: docker.n8n.io/n8nio/n8n:2.14.2
+        ports:
+        - containerPort: 5678
+        env:
+        - name: DB_TYPE
+          value: "postgresdb"
+        - name: DB_POSTGRESDB_HOST
+          value: "pg16-ceph-rw.cnpg-system.svc.cluster.local" # 跨 Namespace 访问
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          value: "n8n" # CNPG 默认库名
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-secret
+              key: DB_POSTGRESDB_USER
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-secret
+              key: DB_POSTGRESDB_PASSWORD
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-db-secret
+              key: N8N_ENCRYPTION_KEY
+        # 生产环境必须设置 Webhook URL
+        - name: WEBHOOK_URL
+          value: "http://n8n-svc.n8n.svc.cluster.local:5678/" 
+        volumeMounts:
+        - name: n8n-data
+          mountPath: /home/node/.n8n
+      volumes:
+      - name: n8n-data
+        persistentVolumeClaim:
+          claimName: n8n-pvc

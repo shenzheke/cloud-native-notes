@@ -1,0 +1,173 @@
+# 1. 基础配置
+global:
+  edition: "SELF_HOSTED"
+  appSecretKey: "U29tZS1TdXBlci1TZWNyZXQtS2V5LUF0LUxlYXN0LTMyLUNoYXJz"
+  innerApiKey: "UY8Qri0LOKpDO9eckiY8dvOgtJynMGaO6XikQ6J1Tjdsafon0OeBYrXW"
+  dbMigrationEnabled: true
+  domain: "dify.top"
+  protocol: "https"
+
+# 2. 外部数据库强制注入 (修复 DB_HOST=localhost 的关键)
+postgresql:
+  enabled: false
+externalPostgres:
+  enabled: true
+  host: "192.168.2.201"
+  port: 5432
+  database: "dify"
+  username: "postgres"
+  password: "920805"
+  sslmode: "disable"
+
+# 3. 外部 Redis
+redis:
+  enabled: false
+externalRedis:
+  host: "10.0.0.1"
+  port: 6379
+  password: "rootroot."
+  db: 0
+
+# 4. API 组件修复
+api:
+  replicas: 1
+  # 强制注入环境变量，防止 Chart 模板解析不到上面的 externalPostgres
+  extraEnv:
+    - name: PLUGIN_DAEMON_HOST
+      value: "dify-plugin-daemon"
+    - name: PLUGIN_DAEMON_PORT
+      value: "5002"
+    - name: PLUGIN_MANAGER_HOST
+      value: "dify-plugin-manager"
+    - name: PLUGIN_CONNECTOR_HOST
+      value: "dify-plugin-connector"
+    - name: SECRET_KEY
+      value: "U29tZS1TdXBlci1TZWNyZXQtS2V5LUF0LUxlYXN0LTMyLUNoYXJz"
+    - name: APP_SECRET_KEY
+      value: "U29tZS1TdXBlci1TZWNyZXQtS2V5LUF0LUxlYXN0LTMyLUNoYXJz"
+    - name: DB_HOST
+      value: "192.168.2.201"
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_USERNAME
+      value: "postgres"
+    - name: DB_PASSWORD
+      value: "920805"
+    - name: DB_DATABASE
+      value: "dify"
+    - name: REDIS_HOST
+      value: "10.0.0.1"
+    - name: REDIS_PASSWORD
+      value: "rootroot."
+    - name: ENTERPRISE_ENABLED
+      value: "false"
+    - name: BILLING_ENABLED
+      value: "false"
+    - name: CAN_REPLACE_LOGO
+      value: "false"
+    # --- 2. 强制告知后端环境是 HTTPS ---
+    - name: CONSOLE_WEB_URL
+      value: "https://dify.top"
+    - name: CONSOLE_API_URL
+      value: "https://dify.top"
+    - name: APP_WEB_URL
+      value: "https://dify.top"
+    - name: APP_API_URL
+      value: "https://dify.top"
+
+    # --- 3. 跨域与安全传输 ---
+    - name: SESSION_COOKIE_SAMESITE
+      value: "Lax"
+    - name: SESSION_COOKIE_SECURE
+      value: "True"
+    - name: CONSOLE_CORS_ALLOW_ORIGINS
+      value: "*" # 调试阶段先开全，通了再缩减
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+# 5. WEB 组件修复 (解决四个方块闪烁)
+web:
+  extraEnv:
+    # 必须告诉前端 API 的访问地址，如果不通，方块会一直闪
+    - name: CONSOLE_API_URL
+      value: "https://dify.top"
+    - name: APP_API_URL
+      value: "https://dify.top"
+
+# 6. 关闭不稳定的插件组件 (除非你确实需要)
+plugin_controller:
+  enabled: false
+plugin_connector:
+  enabled: false
+  image:
+    tag: "0.14.4"
+  extraEnv:
+    - name: DB_SSLMODE
+      value: "disable"
+    - name: DB_HOST
+      value: "192.168.2.201"
+    - name: DB_PASSWORD
+      value: "920805"
+plugin_daemon: # 建议也关闭
+  enabled: true
+  replicas: 1
+  image:
+    repository: langgenius/dify-plugin-daemon
+    tag: "0.5.3-local"
+  extraEnv:
+    - name: SECRET_KEY
+      value: "U29tZS1TdXBlci1TZWNyZXQtS2V5LUF0LUxlYXN0LTMyLUNoYXJz"
+    - name: DB_HOST
+      value: "192.168.2.201"
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_USERNAME
+      value: "postgres"
+    - name: DB_PASSWORD
+      value: "920805"
+    - name: DB_DATABASE
+      value: dify_plugin_daemon
+    - name: REDIS_HOST
+      value: "10.0.0.1"
+    - name: REDIS_PASSWORD
+      value: "rootroot."
+    - name: DB_SSLMODE
+      value: "disable"
+  persistence:
+    enabled: true
+    storageClass: "nfs-sc" # 插件需要存储解压后的包
+plugin_manager: # 建议也关闭
+  enabled: false
+  replicas: 1
+  image:
+    tag: "0.14.4"
+  extraEnv:
+    - name: SECRET_KEY
+      value: "U29tZS1TdXBlci1TZWNyZXQtS2V5LUF0LUxlYXN0LTMyLUNoYXJz"
+    - name: DB_HOST
+      value: "192.168.2.201"
+    - name: REDIS_HOST
+      value: "10.0.0.1"
+
+# 7. 关闭内置入口，由你手写的 Ingress 接管
+gateway:
+  enabled: false
+ingress:
+  enabled: false
+enterprise:
+  replicas: 0
+enterpriseAudit:
+  replicas: 0
+enterpriseFrontend:
+  replicas: 0
+
+# 8. 存储配置保持不变
+persistence:
+  enabled: true # 确保开启
+  type: "local"
+  local:
+    storageClass: "nfs-sc"
+    accessModes: ["ReadWriteMany"]
+    size: 20Gi

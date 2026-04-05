@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dify-ingress
+  namespace: dify
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # 如果你没有配置 Traefik 的 HTTPS，请改用 web 入口
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+      - dify.top
+      secretName: dify-tls-secret
+  rules:
+    - host: dify.top
+      http:
+        paths:
+          # API 核心路径，指向 5001
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: dify-api-svc
+                port:
+                  number: 5001
+          - path: /console/api
+            pathType: Prefix
+            backend:
+              service:
+                name: dify-api-svc
+                port:
+                  number: 5001
+          - path: /files
+            pathType: Prefix
+            backend:
+              service:
+                name: dify-api-svc
+                port:
+                  number: 5001
+          # 前端路径，指向 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dify-web-svc
+                port:
+                  number: 3000
+

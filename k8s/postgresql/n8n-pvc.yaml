@@ -1,0 +1,13 @@
+# n8n-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-pvc
+  namespace: n8n
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: ceph-rbd-sc  # 确保这与你的环境一致

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --url
+        - http://n8n-svc.n8n:5678
+        - --no-autoupdate
+          #        - run
+          #        - --token
+          #        - eyJhIjoiZjIxM2I2MTY3MjQ3ZWE5Mzk5ZTgzNTc5MGVjMjM2MDIiLCJ0IjoiYTFkZmE1NGItYTNiZC00MmFmLThkMTgtNjdlMzllOThiODJjIiwicyI6Ik1HSTRNREEzTm1FdFptWm1aQzAwTkRoakxUaGlOVEl0TWpnNE56UmxOekl4WWpKayJ9

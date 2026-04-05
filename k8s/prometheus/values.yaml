@@ -1,0 +1,72 @@
+fullnameOverride: prometheus
+
+prometheus:
+  prometheusSpec:
+    retention: 5d                  # 数据保留周期（生产建议 15~30d）
+    retentionSize: "30GB"            # 防止磁盘被打爆（非常重要）
+    replicas: 1                      # 单副本（HA 后面说）
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    enableAdminAPI: false            # 生产安全
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs-sc   # 改成你的 StorageClass
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs-sc
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+grafana:
+  enabled: true
+  adminPassword: "ChangeMe_Prod"
+  persistence:
+    enabled: true
+    storageClassName: nfs-sc
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
+
+kubeControllerManager:
+  enabled: true
+
+kubeScheduler:
+  enabled: true
+
+kubeProxy:
+  enabled: true
+
+kubeEtcd:
+  enabled: true
+
