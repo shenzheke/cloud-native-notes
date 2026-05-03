@@ -1,0 +1,26 @@
+# --- 新建 promtail-values.yaml ---
+
+config:
+  clients:
+    - url: http://loki-gateway.logging.svc.cluster.local/loki/api/v1/push
+      # 因为 Loki 开启了 auth_enabled，必须指定租户 ID
+      tenant_id: "fake" 
+      # 如果有特殊字符或需要更多配置可在此扩展
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - drop:
+          older_than: 168h
+# 容忍度设置：确保 Promtail 能调度到所有节点（包括 Master）
+tolerations:
+  - operator: Exists
+    effect: NoSchedule
+
+# 资源限制
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

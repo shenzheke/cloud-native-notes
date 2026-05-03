@@ -1,0 +1,130 @@
+deploymentMode: SimpleScalable  # 开启可扩展模式
+
+loki:
+  auth_enabled: true
+  
+  commonConfig:
+    replication_factor: 1
+
+  # 核心配置：存储索引和数据块
+  storage:
+    type: 's3'
+    bucketNames:
+      chunks: loki-chunks
+      ruler: loki-ruler
+      admin: loki-admin
+    s3:
+      # 这里填写你的 Ceph RGW 地址
+      endpoint: 'http://10.0.0.31:7480' 
+      region: 'us-east-1' # Ceph 通常不校验 region，但必须填写
+      access_key_id: 'MSZ7Z25JM36ULGGDAIH7'
+      secret_access_key: 'pEvDsy91zGGp5BgyTOqO0koaMx6OaPpad6NeTRHt'
+      s3ForcePathStyle: true  # 必须设为 true，因为 Ceph 使用路径风格访问
+      insecure: true
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+
+# 组件副本数配置 (初学者建议各 1 个，生产建议 3 个)
+read:
+  enabled: true
+  replicas: 1
+  extraInitContainers:
+    - name: wait-for-ceph
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          until wget -qO- http://10.0.0.31:7480; do
+            echo "waiting for ceph rgw..."
+            sleep 5
+          done
+
+  startupProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    failureThreshold: 60
+    periodSeconds: 5
+
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 10
+    periodSeconds: 10
+write:
+  enabled: true
+  replicas: 1
+  persistence:
+    enabled: true
+    storageClass: "ceph-rbd-sc"   # ← 必须加上这行
+    size: 10Gi
+backend:
+  enabled: true
+  replicas: 1
+  persistence:
+    enabled: true
+    storageClass: "ceph-rbd-sc" # 这里的块存储仅用于本地缓存索引
+    size: 10Gi
+  extraInitContainers:
+    - name: wait-for-ceph
+      image: busybox
+      command:
+        - sh
+        - -c
+        - |
+          until wget -qO- http://10.0.0.31:7480; do
+            echo "waiting for ceph rgw..."
+            sleep 5
+          done
+
+  startupProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    failureThreshold: 60
+    periodSeconds: 5
+
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http-metrics
+    initialDelaySeconds: 10
+    periodSeconds: 10
+gateway:
+  enabled: true # 提供查询和写入的统一入口
+# ========================
+#  关键优化：cache降级
+# ========================
+chunksCache:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi   # ❗从10G降到512M
+    limits:
+      memory: 1Gi
+
+resultsCache:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# ----------------------------
+# 集成 Promtail 日志采集
+# ----------------------------
+promtail:
+  enabled: false

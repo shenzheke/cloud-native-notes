@@ -1,0 +1,43 @@
+tempo:
+  storage:
+    trace:
+      backend: s3
+      s3:
+        endpoint: 10.0.0.31:7480
+        bucket: tempo-traces
+        access_key: AS5W8GVA3QVGYJ65NM2M
+        secret_key: nj5hDuK0sTBuQ4BO7WdM6UI9izBKE1v8v1VW2hXx
+        insecure: true
+        forcepathstyle: true
+  memberlist:
+    join_members:
+      - tempo-distributed-memberlist
+
+metricsGenerator:
+  enabled: true
+  config:
+    storage:
+      path: /var/tempo/generator-wal
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+distributor:
+  replicas: 1
+  config:
+    log_received_spans: 
+      enabled: true
+
+ingester:
+  replicas: 3
+
+querier:
+  replicas: 1
+
+queryFrontend:
+  replicas: 1
+
+compactor:
+  replicas: 1

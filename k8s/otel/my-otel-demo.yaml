@@ -1,0 +1,14 @@
+global:
+  otelCollector:
+     address: "otel-collector.opentelemetry.svc.cluster.local:4317" 
+opentelemetry-collector:
+  enabled: false
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+jaeger:
+  enabled: false

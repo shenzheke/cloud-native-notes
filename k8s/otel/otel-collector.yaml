@@ -1,0 +1,37 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: opentelemetry
+spec:
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+
+    processors:
+      batch:
+        send_batch_size: 1000
+        timeout: 10s
+
+    exporters:
+      # 核心修改点：这里必须写成 otlp_grpc，不能只写 otlp
+      otlp_grpc/tempo: 
+        endpoint: "tempo-distributor.logging.svc.cluster.local:4317"
+        tls:
+          insecure: true
+      
+      debug:
+        verbosity: basic
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          # 核心修改点：这里也要对应改为 otlp_grpc/tempo
+          exporters: [otlp_grpc/tempo, debug]

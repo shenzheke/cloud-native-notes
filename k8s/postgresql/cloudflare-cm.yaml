@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflared-secret
+  namespace: n8n
+type: Opaque
+stringData:
+  TUNNEL_TOKEN: eyJhIjoiZjIxM2I2MTY3MjQ3ZWE5Mzk5ZTgzNTc5MGVjMjM2MDIiLCJzIjoiWEl3c1U4Y0FDcnZuc2NpcUFzTGNrcDI1MG43SHpUZCs2dHMzQVYvcjUrbz0iLCJ0IjoiMDczOTEyNDMtOTcyYy00MDI5LThhN2UtNjkxNjk4NTRiMmM5In0= 
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: n8n
+data:
+  config.yaml: |
+    tunnel: 07391243-972c-4029-8a7e-69169854b2c9
+
+    ingress:
+      - hostname: n8ntrace.ccwu.cc
+        service: http://n8n-svc.n8n:5678
+
+      - service: http_status:404

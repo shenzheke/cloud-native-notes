@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: otel-demo-ui
+  namespace: otel-demo
+spec:
+  entryPoints:
+    - websecure  # 对应 Traefik 容器暴露的 80 端口名称
+  routes:
+  - match: Host(`otel.traces.com`) # 替换为你实际的域名或 IP
+    kind: Rule
+    services:
+    - name: frontend-proxy
+      port: 8080
+  tls: {}
