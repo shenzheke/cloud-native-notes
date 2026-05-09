@@ -26,6 +26,25 @@ prometheus:
 
 alertmanager:
   enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'namespace', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'n8n-webhook' # 默认接收者
+      routes:
+      - receiver: 'n8n-webhook'
+        matchers:
+          - severity =~ "critical|warning" # 匹配告警级别
+    receivers:
+    - name: 'n8n-webhook'
+      webhook_configs:
+      - url: 'https://n8ntrace.ccwu.cc/webhook/k8s-alerts' # 确认 n8n 的 Service 名和端口
+        send_resolved: true # 告警恢复也通知
+  # 新增 config 块结束
   alertmanagerSpec:
     replicas: 1
     storage:

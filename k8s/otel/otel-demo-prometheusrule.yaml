@@ -1,0 +1,61 @@
+# otel-demo-prometheusrule.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: otel-demo-alerts
+  namespace: otel-demo        # 规则可以建在 otel-demo 或 monitoring ns
+  labels:
+    release: prometheus        # ← 必须匹配 Prometheus Operator 的 ruleSelector
+spec:
+  groups:
+  - name: otel-demo.rules
+    interval: 30s
+    rules:
+
+    # 5xx 错误率 > 5%
+    - alert: OtelDemoHighErrorRate
+      expr: |
+        sum(rate(traces_spanmetrics_calls_total{
+          span_kind="SPAN_KIND_SERVER",
+          status_code="STATUS_CODE_ERROR",
+          namespace="otel-demo"
+        }[5m]))
+        /
+        sum(rate(traces_spanmetrics_calls_total{
+          span_kind="SPAN_KIND_SERVER",
+          namespace="otel-demo"
+        }[5m])) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+        namespace: otel-demo
+      annotations:
+        summary: "otel-demo 错误率过高"
+        description: "错误率 {{ $value | humanizePercentage }}"
+
+    # 服务实例下线
+    - alert: OtelDemoServiceDown
+      expr: up{namespace="otel-demo"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        namespace: otel-demo
+      annotations:
+        summary: "otel-demo 服务下线: {{ $labels.job }}"
+        description: "Pod {{ $labels.pod }} 已不可达"
+
+    # P99 延迟 > 2s
+    - alert: OtelDemoHighLatency
+      expr: |
+        histogram_quantile(0.99,
+          sum by (le, service_name) (
+            rate(traces_spanmetrics_latency_bucket{namespace="otel-demo"}[5m])
+          )
+        ) > 2
+      for: 3m
+      labels:
+        severity: warning
+        namespace: otel-demo
+      annotations:
+        summary: "P99 延迟过高: {{ $labels.service_name }}"
+        description: "P99 = {{ $value | humanizeDuration }}"
