@@ -1,0 +1,18 @@
+# otel-collector-servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-spanmetrics
+  namespace: opentelemetry
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: [opentelemetry]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-collector   # Operator 自动打的 label
+  endpoints:
+  - port: prom-exporter
+    path: /metrics
+    interval: 15s

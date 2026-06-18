@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: otel-demo-opensearch
+  namespace: otel-demo
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: [otel-demo]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opensearch   # 只选 opensearch
+  podMetricsEndpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s

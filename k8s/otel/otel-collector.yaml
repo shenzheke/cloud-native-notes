@@ -4,6 +4,11 @@ metadata:
   name: otel
   namespace: opentelemetry
 spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.145.0
+  ports:
+  - name: prom-exporter
+    port: 8889
+    protocol: TCP
   config:
     receivers:
       otlp:
@@ -17,7 +22,6 @@ spec:
       batch:
         send_batch_size: 1000
         timeout: 10s
-
     exporters:
       # 核心修改点：这里必须写成 otlp_grpc，不能只写 otlp
       otlp_grpc/tempo: 
@@ -27,11 +31,21 @@ spec:
       
       debug:
         verbosity: basic
-
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+        namespace: otel_demo
+        resource_to_telemetry_conversion:
+          enabled: true
+    connectors:
+      spanmetrics: {}
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
           # 核心修改点：这里也要对应改为 otlp_grpc/tempo
-          exporters: [otlp_grpc/tempo, debug]
+          exporters: [otlp_grpc/tempo, debug,spanmetrics]
+        metrics:
+          receivers: [spanmetrics]
+          processors: []
+          exporters: [prometheus]

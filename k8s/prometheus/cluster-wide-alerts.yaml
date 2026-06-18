@@ -42,7 +42,7 @@ spec:
     rules:
     - alert: NodeHighCPU
       expr: |
-        1 - avg by(node) (rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
+        1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
       for: 5m
       labels:
         severity: warning

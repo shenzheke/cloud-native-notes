@@ -1,0 +1,67 @@
+# 1. 创建底层基于 Kafka 的事件代理 (Broker)
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: central-broker
+  namespace: default
+  annotations:
+    eventing.knative.dev/broker.class: Kafka
+spec:
+  config:
+    apiVersion: v1
+    kind: ConfigMap
+    name: kafka-broker-config # 对齐集群内正确的配置
+    namespace: knative-eventing
+---
+# 2. 创建事件接收者 (Knative Service 消费者)
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: report-processor
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+        - image: gcr.io/knative-releases/knative.dev/eventing/cmd/event_display:latest
+---
+# 3. 创建精确过滤器 (Trigger)
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: filter-health-report-trigger
+  namespace: default
+spec:
+  broker: central-broker
+  filter:
+    attributes:
+      # 方案 A：直接放行所有来自 PingSource 的标准事件
+      type: dev.knative.sources.ping
+      
+      # 方案 B（进阶扩展，如果想按业务分类过滤）：
+      # 如果你在 PingSource 的 extensions 里写了 mycustomtype: health-report
+      # 那么这里可以写成：
+      # mycustomtype: health-report
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: report-processor
+---
+# 4. 创建事件源 (PingSource 生产者)
+apiVersion: sources.knative.dev/v1
+kind: PingSource
+metadata:
+  name: hourly-report-source
+  namespace: default
+spec:
+  schedule: "*/2 * * * *" # 改为每 1 分钟触发一次，方便观察
+  contentType: "application/json"
+  data: '{"status": "UP", "disk_usage": "72%", "memory_free_gb": 16}'
+  # 暂时拿掉有命名冲突隐患的 ceOverrides。
+  # 纯净验证：只要发出默认的 dev.knative.sources.ping 即可。
+  sink:
+    ref:
+      apiVersion: eventing.knative.dev/v1
+      kind: Broker
+      name: central-broker

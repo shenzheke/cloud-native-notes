@@ -1,0 +1,82 @@
+# 1. 定义事件中心（Broker）
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: shop-broker
+  namespace: shop
+  annotations:
+    # 告诉 Knative：这个 Broker 底层用 Kafka 承载数据
+    eventing.knative.dev/broker.class: Kafka 
+spec:
+  config:
+    apiVersion: v1
+    kind: ConfigMap
+    name: kafka-broker-config # 里面配置了 Kafka 集群地址
+    namespace: knative-eventing
+
+---
+# 2. 定义触发器 1：库存系统（只要创建订单事件）
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: inventory-trigger
+  namespace: shop
+spec:
+  broker: shop-broker
+  filter:
+    attributes:
+      type: order.created # 运维/开发定义的业务过滤规则（Broker 负责过滤）
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: inventory-service
+
+---
+# 3. 定义触发器 2：通知系统（只要失败订单事件）
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: notification-trigger
+  namespace: shop
+spec:
+  broker: shop-broker
+  filter:
+    attributes:
+      type: order.failed # 不同的过滤规则
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: sms-service
+
+---
+# 1. 库存系统服务 (接收 order.created)
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: inventory-service
+  namespace: shop
+spec:
+  template:
+    spec:
+      containers:
+        - image: jmalloc/echo-server
+          # 仅保留最基础的安全配置，消除核心 Warning，且不与镜像默认用户冲突
+          securityContext:
+            allowPrivilegeEscalation: false
+
+---
+# 2. 通知系统服务 (接收 order.failed)
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: sms-service
+  namespace: shop
+spec:
+  template:
+    spec:
+      containers:
+        - image: jmalloc/echo-server
+          securityContext:
+            allowPrivilegeEscalation: false

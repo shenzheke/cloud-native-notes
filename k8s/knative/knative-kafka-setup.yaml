@@ -1,0 +1,41 @@
+# 1. 修正连接你实际 Kafka 集群的 ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-broker-config
+  namespace: knative-eventing # 必须在此命名空间下
+data:
+  # 已经根据你的 `kubectl get svc -n kafka` 输出修正为 my-cluster-kafka-bootstrap
+  bootstrapServers: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  default.topic.partitions: "1"
+  default.topic.replication.factor: "1"   # 单节点只能为 1
+---
+# 2. 定义基于 Kafka 的默认 Broker 配置（让 Knative 默认使用 Kafka 而不是内存）
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-br-defaults
+  namespace: knative-eventing
+data:
+  default-br-config: |
+    clusterDefault:
+      brokerClass: Kafka
+      apiVersion: v1
+      kind: ConfigMap
+      name: kafka-broker-config
+      namespace: knative-eventing
+---
+# 3. 在你实际的业务命名空间下，创建测试用的 Broker
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: order-broker
+  namespace: default # 或者你的业务命名空间
+  annotations:
+    eventing.knative.dev/broker.class: Kafka # 强制声明使用 Kafka 引擎
+spec:
+  config:
+    apiVersion: v1
+    kind: ConfigMap
+    name: kafka-broker-config
+    namespace: knative-eventing

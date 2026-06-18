@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+
+---
+# 1. 定义底层管道（映射到 Kafka 里的一个名为 order-topic 的 Topic）
+apiVersion: messaging.knative.dev/v1beta1
+kind: KafkaChannel
+metadata:
+  name: order-channel
+  namespace: shop
+spec:
+  numPartitions: 1      # 运维直接定义 Kafka 分区数
+  replicationFactor: 1  # 副本数
+
+---
+# 2. 定义订阅（直接把管道接给大数据服务）
+apiVersion: messaging.knative.dev/v1
+kind: Subscription
+metadata:
+  name: bigdata-subscription
+  namespace: shop
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1beta1
+    kind: KafkaChannel
+    name: order-channel
+  subscriber:
+    ref:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bigdata-analyzer-svc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-channel-config
+  namespace: knative-eventing # 必须在此命名空间下
+data:
+  # 已经根据你的 `kubectl get svc -n kafka` 输出修正为 my-cluster-kafka-bootstrap
+  bootstrap.servers: "my-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  default.topic.partitions: "1"
+  default.topic.replication.factor: "1"   # 单节点只能为 1
+
